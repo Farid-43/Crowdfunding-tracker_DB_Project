@@ -1,0 +1,558 @@
+/**
+ * SQL Styles - Educational SQL Feature Visualization
+ * Provides styling for SQL tooltips, code highlighting, and feature panels
+ */
+
+/* ===================================
+   SQL Interactive Elements
+   =================================== */
+
+.sql-interactive {
+    position: relative;
+    cursor: help;
+    border-bottom: 2px dotted #3b82f6;
+    transition: all 0.3s ease;
+}
+
+.sql-interactive:hover {
+    background-color: #dbeafe;
+    border-bottom-color: #2563eb;
+}
+
+/* Add SQL icon indicator */
+.sql-interactive::before {
+    content: '📊';
+    font-size: 0.8em;
+    margin-right: 4px;
+    opacity: 0.7;
+}
+
+/* ===================================
+   SQL Tooltip
+   =================================== */
+
+.sql-tooltip {
+    position: absolute;
+    z-index: 10000;
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    min-width: 400px;
+    max-width: 600px;
+    transition: opacity 0.2s ease;
+    font-family: 'Courier New', monospace;
+}
+
+.sql-tooltip.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.sql-tooltip.visible {
+    display: block;
+    opacity: 1;
+}
+
+.sql-tooltip-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    padding: 12px 16px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sql-tooltip-title {
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+}
+
+.sql-tooltip-close {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.sql-tooltip-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sql-tooltip-content {
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: #0f172a;
+}
+
+.sql-tooltip-content pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.sql-tooltip-content code {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.sql-tooltip-footer {
+    padding: 12px 16px;
+    background: #334155;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.sql-tooltip-type {
+    background: #3b82f6;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    color: white;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.sql-tooltip-explanation {
+    flex: 1;
+    margin-left: 12px;
+    color: #cbd5e1;
+    font-style: italic;
+}
+
+/* ===================================
+   SQL Syntax Highlighting
+   =================================== */
+
+.sql-keyword {
+    color: #c678dd;
+    font-weight: bold;
+}
+
+.sql-function {
+    color: #61afef;
+    font-weight: bold;
+}
+
+.sql-string {
+    color: #98c379;
+}
+
+.sql-number {
+    color: #d19a66;
+}
+
+.sql-comment {
+    color: #5c6370;
+    font-style: italic;
+}
+
+.sql-operator {
+    color: #56b6c2;
+}
+
+/* ===================================
+   SQL Modal
+   =================================== */
+
+.sql-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.sql-modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.sql-modal-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sql-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.sql-modal-close {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.sql-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sql-modal-body {
+    padding: 24px;
+    max-height: calc(90vh - 180px);
+    overflow-y: auto;
+}
+
+.sql-explanation {
+    background: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #1e3a8a;
+}
+
+.sql-query-container {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.sql-code-display {
+    color: #e2e8f0;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.sql-features {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.sql-features strong {
+    display: block;
+    margin-bottom: 12px;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.sql-features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sql-features li {
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: white;
+    border-left: 3px solid #3b82f6;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #475569;
+}
+
+.sql-modal-footer {
+    padding: 16px 24px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-copy,
+.btn-close {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-copy {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-copy:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-close {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.btn-close:hover {
+    background: #cbd5e1;
+}
+
+/* ===================================
+   SQL Feature Panel
+   =================================== */
+
+.sql-features-panel {
+    background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 24px 0;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.sql-features-panel h3 {
+    color: #1e40af;
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sql-features-panel h3 button {
+    background: transparent;
+    border: none;
+    color: #3b82f6;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.sql-features-panel h3 button:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.sql-feature-item {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid #3b82f6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
+}
+
+.sql-feature-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.feature-type {
+    display: inline-block;
+    background: #3b82f6;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.sql-feature-item code {
+    display: block;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 12px;
+    border-radius: 6px;
+    margin: 8px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+
+.feature-desc {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+    font-style: italic;
+    margin-top: 8px;
+}
+
+.sql-features-panel.collapsed .sql-feature-item {
+    display: none;
+}
+
+/* ===================================
+   SQL Query Statistics
+   =================================== */
+
+.query-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 4px solid #3b82f6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1e293b;
+}
+
+.stat-unit {
+    font-size: 14px;
+    color: #64748b;
+    margin-left: 4px;
+}
+
+/* ===================================
+   Code Block Styling
+   =================================== */
+
+pre.sql-block {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 16px 0;
+    border: 1px solid #334155;
+}
+
+pre.sql-block code {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ===================================
+   Responsive Design
+   =================================== */
+
+@media (max-width: 768px) {
+    .sql-tooltip {
+        min-width: 300px;
+        max-width: 90vw;
+    }
+
+    .sql-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .sql-features-panel {
+        padding: 16px;
+    }
+
+    .query-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===================================
+   Animations
+   =================================== */
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.sql-loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ===================================
+   Print Styles
+   =================================== */
+
+@media print {
+    .sql-tooltip,
+    .sql-modal {
+        display: none !important;
+    }
+
+    .sql-features-panel {
+        break-inside: avoid;
+    }
+}
