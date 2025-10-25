@@ -132,6 +132,18 @@ $favorited_campaigns_query = "SELECT
                               LIMIT 5";
 $favorited_campaigns = executeAndLogQuery($pdo, $favorited_campaigns_query, [], 'campaigns.php', 'SELECT')->fetchAll();
 
+// Get usernames who favorited each campaign
+$campaign_favoriters = [];
+foreach ($favorited_campaigns as $fav) {
+    $favoriters_query = "SELECT u.username, u.full_name 
+                         FROM Campaign_Favorites cf
+                         INNER JOIN Users u ON cf.user_id = u.user_id
+                         WHERE cf.campaign_id = :campaign_id
+                         ORDER BY cf.favorited_at DESC";
+    $favoriters = executeAndLogQuery($pdo, $favoriters_query, [':campaign_id' => $fav['campaign_id']], 'campaigns.php', 'SELECT')->fetchAll();
+    $campaign_favoriters[$fav['campaign_id']] = $favoriters;
+}
+
 include __DIR__ . '/includes/header.php';
 ?>
 
@@ -239,7 +251,7 @@ include __DIR__ . '/includes/header.php';
 
 <!-- Most Favorited Campaigns (Campaign_Favorites M:N Relationship) -->
 <?php if (!empty($favorited_campaigns)): ?>
-<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+<div class="bg-white rounded-lg shadow-md p-6 mb-8" style="overflow: visible;">
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-bold text-gray-900 flex items-center"
             data-sql-query="SELECT c.campaign_title, COUNT(cf.user_id) as favorite_count FROM Campaigns c LEFT JOIN Campaign_Favorites cf ON c.campaign_id = cf.campaign_id GROUP BY c.campaign_id ORDER BY favorite_count DESC"
@@ -253,7 +265,7 @@ include __DIR__ . '/includes/header.php';
         </span>
     </div>
     
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto" style="overflow: visible;">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -297,11 +309,31 @@ include __DIR__ . '/includes/header.php';
                             <?php echo htmlspecialchars($fav['creator_name']); ?>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                            <i class="fas fa-heart mr-1"></i>
-                            <?php echo $fav['favorite_count']; ?> users
-                        </span>
+                    <td class="px-6 py-4 whitespace-nowrap" style="overflow: visible;">
+                        <?php 
+                        $favoriters = $campaign_favoriters[$fav['campaign_id']] ?? [];
+                        $favoriters_list = array_map(function($f) {
+                            return htmlspecialchars($f['full_name'] ? $f['full_name'] . ' (' . $f['username'] . ')' : $f['username']);
+                        }, $favoriters);
+                        $tooltip_content = !empty($favoriters_list) ? implode('<br>', $favoriters_list) : 'No users yet';
+                        ?>
+                        <div class="relative inline-block favorites-tooltip-container" style="overflow: visible;">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
+                                  style="cursor: help;">
+                                <i class="fas fa-heart mr-1"></i>
+                                <?php echo $fav['favorite_count']; ?> users
+                            </span>
+                            <div class="favorites-tooltip hidden absolute bg-gray-900 text-white text-sm rounded-lg shadow-lg p-3" 
+                                 style="bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 8px; min-width: 250px; max-width: 400px; white-space: normal; z-index: 9999;">
+                                <div class="font-semibold mb-2 text-yellow-300">
+                                    <i class="fas fa-users mr-1"></i> Favorited by:
+                                </div>
+                                <div class="text-left">
+                                    <?php echo $tooltip_content; ?>
+                                </div>
+                                <div class="absolute" style="top: 100%; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #1f2937;"></div>
+                            </div>
+                        </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="text-sm text-gray-600">
@@ -761,6 +793,34 @@ window.onclick = function(event) {
     if (event.target.id === 'editModal') closeEditModal();
     if (event.target.id === 'deleteModal') closeDeleteModal();
 }
+
+// Favorites tooltip functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipContainers = document.querySelectorAll('.favorites-tooltip-container');
+    
+    tooltipContainers.forEach(container => {
+        const trigger = container.querySelector('span');
+        const tooltip = container.querySelector('.favorites-tooltip');
+        
+        if (trigger && tooltip) {
+            trigger.addEventListener('mouseenter', function() {
+                tooltip.classList.remove('hidden');
+            });
+            
+            trigger.addEventListener('mouseleave', function() {
+                setTimeout(() => {
+                    if (!tooltip.matches(':hover')) {
+                        tooltip.classList.add('hidden');
+                    }
+                }, 100);
+            });
+            
+            tooltip.addEventListener('mouseleave', function() {
+                tooltip.classList.add('hidden');
+            });
+        }
+    });
+});
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

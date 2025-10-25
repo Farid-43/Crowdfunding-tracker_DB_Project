@@ -46,6 +46,43 @@ $recent_donations_query = "SELECT d.donation_id, d.amount, d.donation_date,
                            LIMIT 10";
 $recent_donations = executeAndLogQuery($pdo, $recent_donations_query, [], 'index.php', 'SELECT')->fetchAll();
 
+// Get database tables with schema information
+$tables_query = "SELECT 
+    TABLE_NAME,
+    TABLE_TYPE,
+    TABLE_ROWS,
+    CREATE_TIME,
+    TABLE_COMMENT
+FROM information_schema.TABLES 
+WHERE TABLE_SCHEMA = 'CF_Tracker' 
+AND TABLE_TYPE = 'BASE TABLE'
+AND TABLE_NAME IN ('Users', 'Categories', 'Campaigns', 'Donations', 'Rewards', 'Comments', 
+                    'Campaign_Updates', 'Campaign_Favorites', 'Campaign_Category', 'Donor_Rewards')
+ORDER BY 
+    CASE TABLE_NAME
+        WHEN 'Users' THEN 1
+        WHEN 'Categories' THEN 2
+        WHEN 'Campaigns' THEN 3
+        WHEN 'Donations' THEN 4
+        WHEN 'Rewards' THEN 5
+        WHEN 'Comments' THEN 6
+        WHEN 'Campaign_Updates' THEN 7
+        WHEN 'Campaign_Favorites' THEN 8
+        WHEN 'Campaign_Category' THEN 9
+        WHEN 'Donor_Rewards' THEN 10
+    END";
+$tables = executeAndLogQuery($pdo, $tables_query, [], 'index.php', 'SELECT')->fetchAll();
+
+// Get CREATE TABLE statements for each table
+$table_schemas = [];
+foreach ($tables as $table) {
+    $create_query = "SHOW CREATE TABLE " . $table['TABLE_NAME'];
+    $create_result = executeAndLogQuery($pdo, $create_query, [], 'index.php', 'SHOW')->fetch();
+    if ($create_result) {
+        $table_schemas[$table['TABLE_NAME']] = $create_result['Create Table'];
+    }
+}
+
 include __DIR__ . '/includes/header.php';
 ?>
 
@@ -312,6 +349,108 @@ include __DIR__ . '/includes/header.php';
                 View All Donations <i class="fas fa-arrow-right ml-1"></i>
             </a>
         </div>
+    </div>
+</div>
+
+<!-- Database Tables Schema -->
+<div class="mt-8 bg-white rounded-lg shadow-md p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center"
+            data-sql-query="SELECT TABLE_NAME, TABLE_ROWS, TABLE_COMMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'CF_Tracker' AND TABLE_TYPE = 'BASE TABLE'"
+            data-sql-explanation="Queries information_schema to get metadata about all tables in the database"
+            data-sql-type="SELECT">
+            <i class="fas fa-database text-blue-600 mr-3"></i>
+            Database Tables Schema
+        </h2>
+        <span class="text-sm text-gray-500">
+            <i class="fas fa-table mr-1"></i><?php echo count($tables); ?> Tables
+        </span>
+    </div>
+
+    <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="flex items-start">
+            <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+            <div class="text-sm text-blue-800">
+                <strong>Hover over any table card</strong> to see the complete SQL CREATE TABLE statement with all columns, data types, constraints, and foreign keys.
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <?php foreach ($tables as $table): ?>
+            <?php
+            $table_name = $table['TABLE_NAME'];
+            $is_bridge = strpos($table_name, '_') !== false && (
+                strpos($table_name, 'Campaign_Favorites') !== false ||
+                strpos($table_name, 'Campaign_Category') !== false ||
+                strpos($table_name, 'Donor_Rewards') !== false
+            );
+            $is_audit = strpos($table_name, 'Audit') !== false || strpos($table_name, 'Log') !== false;
+            
+            if ($is_bridge) {
+                $bg_color = 'bg-purple-50 border-purple-300';
+                $icon_color = 'text-purple-600';
+                $badge_color = 'bg-purple-100 text-purple-800';
+                $badge_text = 'M:N Bridge';
+            } elseif ($is_audit) {
+                $bg_color = 'bg-gray-50 border-gray-300';
+                $icon_color = 'text-gray-600';
+                $badge_color = 'bg-gray-100 text-gray-800';
+                $badge_text = 'Audit';
+            } else {
+                $bg_color = 'bg-blue-50 border-blue-300';
+                $icon_color = 'text-blue-600';
+                $badge_color = 'bg-blue-100 text-blue-800';
+                $badge_text = 'Core';
+            }
+            ?>
+            
+            <div class="border-2 <?php echo $bg_color; ?> rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer"
+                 data-sql-query="<?php echo htmlspecialchars($table_schemas[$table_name] ?? 'CREATE TABLE ' . $table_name); ?>"
+                 data-sql-explanation="Complete CREATE TABLE statement showing all columns, constraints, indexes, and foreign keys"
+                 data-sql-type="CREATE TABLE">
+                
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center">
+                        <i class="fas fa-table <?php echo $icon_color; ?> text-xl mr-2"></i>
+                        <h3 class="font-bold text-gray-900 text-sm"><?php echo $table_name; ?></h3>
+                    </div>
+                    <span class="text-xs px-2 py-1 <?php echo $badge_color; ?> rounded-full font-medium">
+                        <?php echo $badge_text; ?>
+                    </span>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-600">
+                            <i class="fas fa-chart-bar mr-1"></i>Rows
+                        </span>
+                        <span class="font-semibold text-gray-900">
+                            <?php echo number_format($table['TABLE_ROWS'] ?? 0); ?>
+                        </span>
+                    </div>
+                    
+                    <?php if (!empty($table['TABLE_COMMENT'])): ?>
+                    <div class="text-xs text-gray-600 italic border-t border-gray-200 pt-2">
+                        <i class="fas fa-comment-dots mr-1"></i>
+                        <?php echo htmlspecialchars($table['TABLE_COMMENT']); ?>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <div class="text-xs text-gray-500 border-t border-gray-200 pt-2">
+                        <i class="fas fa-clock mr-1"></i>
+                        Created: <?php echo $table['CREATE_TIME'] ? date('M j, Y', strtotime($table['CREATE_TIME'])) : 'N/A'; ?>
+                    </div>
+                </div>
+                
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <div class="flex items-center text-xs text-gray-500">
+                        <i class="fas fa-mouse-pointer mr-1"></i>
+                        <span class="italic">Hover to see CREATE TABLE query</span>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
 

@@ -99,16 +99,6 @@ $stats = executeAndLogQuery($pdo, $reward_stats_query, [], 'rewards.php', 'SELEC
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Educational Banner -->
-<div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 mb-6 rounded-lg shadow-lg">
-    <div class="container mx-auto px-4 flex items-center justify-center">
-        <i class="fas fa-graduation-cap mr-3 text-2xl"></i>
-        <p class="text-sm md:text-base">
-            <strong>Educational Platform:</strong> Hover over any button/link to see the SQL query it executes! Click to view detailed explanations.
-        </p>
-    </div>
-</div>
-
 <div class="container mx-auto px-4 py-8">
     
     <!-- Page Header -->
