@@ -73,23 +73,23 @@ function createUser($pdo, $username, $email, $password, $full_name, $role = 'don
  * Update user information
  * Demonstrates: UPDATE with WHERE, Prepared statements, Triggers (audit logging)
  */
-function updateUser($pdo, $user_id, $data) {
-    $allowed_fields = ['username', 'email', 'full_name', 'phone', 'bio', 'user_role'];
-    $set_clauses = [];
-    $params = [':user_id' => $user_id];
+function updateUser($pdo, $user_id, $full_name, $email, $user_role, $account_balance, $is_active) {
+    $query = "UPDATE Users 
+              SET full_name = :full_name,
+                  email = :email,
+                  user_role = :user_role,
+                  account_balance = :account_balance,
+                  is_active = :is_active
+              WHERE user_id = :user_id";
     
-    foreach ($data as $field => $value) {
-        if (in_array($field, $allowed_fields)) {
-            $set_clauses[] = "$field = :$field";
-            $params[":$field"] = $value;
-        }
-    }
-    
-    if (empty($set_clauses)) {
-        return false;
-    }
-    
-    $query = "UPDATE Users SET " . implode(', ', $set_clauses) . " WHERE user_id = :user_id";
+    $params = [
+        ':user_id' => $user_id,
+        ':full_name' => $full_name,
+        ':email' => $email,
+        ':user_role' => $user_role,
+        ':account_balance' => $account_balance,
+        ':is_active' => $is_active
+    ];
     
     executeAndLogQuery($pdo, $query, $params, 'users.php', 'UPDATE');
     return true;

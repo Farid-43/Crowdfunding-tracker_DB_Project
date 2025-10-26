@@ -85,7 +85,6 @@
                         <i class="fas fa-database text-3xl text-blue-600 mr-3"></i>
                         <div>
                             <h1 class="text-xl font-bold text-gray-900">CF Tracker</h1>
-                            <p class="text-xs text-gray-500">SQL Learning Platform</p>
                         </div>
                     </a>
                 </div>

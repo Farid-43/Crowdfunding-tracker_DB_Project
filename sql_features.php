@@ -35,6 +35,11 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
     $stmt->execute([':search' => '%' . $search_query . '%']);
     $search_results = $stmt->fetchAll();
     
+    // Add usage descriptions to each result
+    foreach ($search_results as &$result) {
+        $result['usage'] = getQueryUsageDescription($result['query_text'], $result['query_type']);
+    }
+    
     // Also search in SQL schema files for triggers, procedures, functions, views
     $files_to_search = [
         'database/schema.sql' => 'Schema Definition',
@@ -203,6 +208,74 @@ $sql_features = [
         ['name' => 'DATEDIFF()', 'description' => 'Difference between dates', 'example' => 'SELECT DATEDIFF(end_date, NOW()) FROM Campaigns', 'page' => 'Available in schema', 'status' => 'implemented'],
     ],
 ];
+
+/**
+ * Generate a short usage description for a query
+ */
+function getQueryUsageDescription($query_text, $query_type) {
+    $query_lower = strtolower($query_text);
+    
+    // Detect table names
+    $tables = [];
+    if (preg_match_all('/(?:from|join|into|update)\s+(\w+)/i', $query_text, $matches)) {
+        $tables = array_unique($matches[1]);
+    }
+    
+    $table_str = !empty($tables) ? implode(', ', array_slice($tables, 0, 2)) : '';
+    
+    // Generate description based on query type
+    switch (strtoupper($query_type)) {
+        case 'SELECT':
+            if (stripos($query_lower, 'count(') !== false) {
+                return "Counting records" . ($table_str ? " from $table_str" : "");
+            } elseif (stripos($query_lower, 'sum(') !== false) {
+                return "Calculating totals" . ($table_str ? " from $table_str" : "");
+            } elseif (stripos($query_lower, 'avg(') !== false) {
+                return "Computing averages" . ($table_str ? " from $table_str" : "");
+            } elseif (stripos($query_lower, 'group by') !== false) {
+                return "Grouping and aggregating" . ($table_str ? " $table_str data" : " data");
+            } elseif (stripos($query_lower, 'join') !== false) {
+                return "Joining multiple tables" . ($table_str ? " ($table_str)" : "");
+            } elseif (stripos($query_lower, 'order by') !== false) {
+                return "Retrieving sorted data" . ($table_str ? " from $table_str" : "");
+            } elseif (stripos($query_lower, 'where') !== false) {
+                return "Filtering records" . ($table_str ? " from $table_str" : "");
+            } else {
+                return "Retrieving data" . ($table_str ? " from $table_str" : "");
+            }
+            
+        case 'INSERT':
+            return "Adding new record" . ($table_str ? " to $table_str" : "");
+            
+        case 'UPDATE':
+            return "Modifying existing record" . ($table_str ? " in $table_str" : "");
+            
+        case 'DELETE':
+            return "Removing record" . ($table_str ? " from $table_str" : "");
+            
+        case 'CALL':
+            if (preg_match('/call\s+(\w+)/i', $query_text, $match)) {
+                return "Executing stored procedure: " . $match[1];
+            }
+            return "Executing stored procedure";
+            
+        case 'CREATE':
+            if (stripos($query_lower, 'view') !== false) {
+                return "Creating database view";
+            } elseif (stripos($query_lower, 'table') !== false) {
+                return "Creating new table";
+            } elseif (stripos($query_lower, 'index') !== false) {
+                return "Creating index for performance";
+            }
+            return "Creating database object";
+            
+        case 'SHOW':
+            return "Displaying database metadata";
+            
+        default:
+            return "Executing " . strtolower($query_type) . " operation" . ($table_str ? " on $table_str" : "");
+    }
+}
 
 // Count total features
 $total_categories = count($sql_features);
@@ -416,6 +489,17 @@ include __DIR__ . '/includes/header.php';
                                 <i class="fas fa-calendar mr-1"></i>
                                 <?php echo date('M j, H:i:s', strtotime($result['executed_at'])); ?>
                             </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Usage Description -->
+                    <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 p-3 mb-3 rounded-r">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-indigo-600 text-lg mt-0.5 mr-2"></i>
+                            <div class="flex-1">
+                                <strong class="text-xs text-indigo-900 uppercase tracking-wide">Usage:</strong>
+                                <p class="text-sm text-indigo-800 font-medium mt-0.5"><?php echo htmlspecialchars($result['usage']); ?></p>
+                            </div>
                         </div>
                     </div>
                     
