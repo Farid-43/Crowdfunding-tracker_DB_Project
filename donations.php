@@ -23,7 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $_POST['amount'],
             $_POST['payment_method'],
             $_POST['message'] ?? '',
-            isset($_POST['is_anonymous']) ? 1 : 0
+            isset($_POST['is_anonymous']) ? 1 : 0,
+            $_POST['reward_id'] ?? null
         );
         
         if ($result['success']) {
@@ -131,7 +132,7 @@ $active_campaigns = getAllCampaigns($pdo, 'active');
 // Get active donors
 $active_donors_query = "SELECT user_id, username, full_name, account_balance 
                         FROM Users 
-                        WHERE user_role = 'donor' AND is_active = TRUE 
+                        WHERE is_active = TRUE 
                         ORDER BY full_name";
 $active_donors = executeAndLogQuery($pdo, $active_donors_query, [], 'donations.php', 'SELECT')->fetchAll();
 
@@ -171,51 +172,6 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <!-- SQL Features Panel -->
-<div class="sql-features-panel">
-    <h3>
-        📋 SQL Features Demonstrated on This Page
-        <button onclick="toggleFeaturePanel('donations-features')">
-            <i class="fas fa-chevron-down"></i>
-        </button>
-    </h3>
-    <div id="donations-features">
-        <div class="sql-feature-item">
-            <span class="feature-type">Transaction Control</span>
-            <code>START TRANSACTION; INSERT INTO Donations...; UPDATE Campaigns...; COMMIT;</code>
-            <span class="feature-desc">ACID-compliant transaction with BEGIN/COMMIT/ROLLBACK for data integrity</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">CASE Statements</span>
-            <code>CASE WHEN is_anonymous = 1 THEN 'Anonymous' ELSE full_name END</code>
-            <span class="feature-desc">Conditional logic in SELECT for displaying anonymous vs named donors</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Window Functions</span>
-            <code>SUM(amount) OVER (PARTITION BY campaign_id ORDER BY donation_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)</code>
-            <span class="feature-desc">Running totals per campaign using window function with frame specification</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">UNION Operation</span>
-            <code>SELECT ... FROM Donors UNION SELECT ... FROM Campaigners ORDER BY total_amount DESC</code>
-            <span class="feature-desc">Combines donor and campaigner data into single result set, removing duplicates</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Trigger Execution</span>
-            <code>AFTER INSERT ON Donations ... INSERT INTO Donation_Audit_Log</code>
-            <span class="feature-desc">Automatic audit logging triggered after donation insertion</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">ROW_NUMBER()</span>
-            <code>ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY amount DESC)</code>
-            <span class="feature-desc">Ranks donations within each campaign by amount</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Aggregate CASE</span>
-            <code>SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count</code>
-            <span class="feature-desc">Conditional aggregation to count by status using CASE in SUM</span>
-        </div>
-    </div>
-</div>
 
 <!-- Payment Method Statistics -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -452,7 +408,8 @@ include __DIR__ . '/includes/header.php';
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Campaign *</label>
-                    <select name="campaign_id" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                    <select name="campaign_id" id="campaign_select" required class="w-full border border-gray-300 rounded-lg px-4 py-2"
+                            onchange="loadCampaignRewards()">
                         <option value="">Select Campaign</option>
                         <?php foreach ($active_campaigns as $campaign): ?>
                             <option value="<?php echo $campaign['campaign_id']; ?>">
@@ -478,9 +435,10 @@ include __DIR__ . '/includes/header.php';
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Amount ($) *</label>
-                    <input type="number" name="amount" step="0.01" min="1" required
+                    <input type="number" name="amount" id="donation_amount" step="0.01" min="1" required
                            class="w-full border border-gray-300 rounded-lg px-4 py-2"
-                           placeholder="100.00">
+                           placeholder="100.00"
+                           onchange="updateAvailableRewards()">
                 </div>
                 
                 <div>
@@ -491,6 +449,16 @@ include __DIR__ . '/includes/header.php';
                         <option value="bank_transfer">Bank Transfer</option>
                         <option value="crypto">Cryptocurrency</option>
                     </select>
+                </div>
+                
+                <div class="md:col-span-2" id="reward_selection_container">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-gift mr-1"></i>Choose Reward (Optional)
+                    </label>
+                    <select name="reward_id" id="reward_select" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="">No reward - Just donate</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Select a campaign first to see available rewards</p>
                 </div>
                 
                 <div class="md:col-span-2">
@@ -533,12 +501,86 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <script>
+let campaignRewards = [];
+
 function openDonateModal() {
     document.getElementById('donateModal').classList.remove('hidden');
+    // Refresh donor list to get latest balances
+    refreshDonorList();
+}
+
+function refreshDonorList() {
+    fetch('get_donors_list.php')
+        .then(response => response.json())
+        .then(data => {
+            const donorSelect = document.querySelector('select[name="donor_id"]');
+            donorSelect.innerHTML = '<option value="">Select Donor</option>';
+            data.forEach(donor => {
+                const option = document.createElement('option');
+                option.value = donor.user_id;
+                option.textContent = `${donor.full_name} (Balance: $${parseFloat(donor.account_balance).toFixed(2)})`;
+                donorSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading donors:', error));
 }
 
 function closeDonateModal() {
     document.getElementById('donateModal').classList.add('hidden');
+}
+
+function loadCampaignRewards() {
+    const campaignId = document.getElementById('campaign_select').value;
+    const rewardSelect = document.getElementById('reward_select');
+    
+    if (!campaignId) {
+        rewardSelect.innerHTML = '<option value="">Select a campaign first</option>';
+        campaignRewards = [];
+        return;
+    }
+    
+    // Fetch rewards for selected campaign
+    fetch(`get_campaign_rewards.php?campaign_id=${campaignId}`)
+        .then(response => response.json())
+        .then(data => {
+            campaignRewards = data;
+            
+            rewardSelect.innerHTML = '<option value="">No reward - Just donate</option>';
+            
+            if (data.length > 0) {
+                data.forEach(reward => {
+                    const option = document.createElement('option');
+                    option.value = reward.reward_id;
+                    option.textContent = `${reward.title} - Min $${parseFloat(reward.min_amount).toFixed(2)}`;
+                    rewardSelect.appendChild(option);
+                });
+            }
+            
+            // Update rewards based on current amount if entered
+            updateAvailableRewards();
+        })
+        .catch(error => {
+            console.error('Error loading rewards:', error);
+            rewardSelect.innerHTML = '<option value="">Error loading rewards</option>';
+        });
+}
+
+function updateAvailableRewards() {
+    const amount = parseFloat(document.getElementById('donation_amount').value) || 0;
+    const rewardSelect = document.getElementById('reward_select');
+    
+    // Clear existing options
+    rewardSelect.innerHTML = '<option value="">No reward - Just donate</option>';
+    
+    // Filter rewards by donation amount
+    const availableRewards = campaignRewards.filter(r => amount >= parseFloat(r.min_amount));
+    
+    availableRewards.forEach(reward => {
+        const option = document.createElement('option');
+        option.value = reward.reward_id;
+        option.textContent = `${reward.title} - Min $${parseFloat(reward.min_amount).toFixed(2)} (${reward.current_backers}/${reward.max_backers || '∞'} claimed)`;
+        rewardSelect.appendChild(option);
+    });
 }
 
 window.onclick = function(event) {

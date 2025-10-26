@@ -95,47 +95,6 @@ include __DIR__ . '/includes/header.php';
     <p class="text-gray-600">Real-time platform statistics and active campaigns</p>
 </div>
 
-<!-- SQL Features Panel for Dashboard -->
-<div class="sql-features-panel">
-    <h3>
-        📋 SQL Features Demonstrated on This Page
-        <button onclick="toggleFeaturePanel('dashboard-features')">
-            <i class="fas fa-chevron-down"></i>
-        </button>
-    </h3>
-    <div id="dashboard-features">
-        <div class="sql-feature-item">
-            <span class="feature-type">Stored Procedure</span>
-            <code>CALL Calculate_Platform_Statistics()</code>
-            <span class="feature-desc">Executes stored procedure to calculate aggregate platform statistics</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">VIEW Usage</span>
-            <code>SELECT * FROM Active_Campaigns_Summary ORDER BY campaign_id DESC LIMIT 6</code>
-            <span class="feature-desc">Uses pre-built VIEW for complex campaign data with calculations</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">INNER JOIN</span>
-            <code>FROM Donations d INNER JOIN Campaigns c ON d.campaign_id = c.campaign_id INNER JOIN Users u ON d.donor_id = u.user_id</code>
-            <span class="feature-desc">Multiple INNER JOINs to connect donations with campaigns and users</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">CASE Statement</span>
-            <code>CASE WHEN d.is_anonymous = 1 THEN 'Anonymous' ELSE u.full_name END</code>
-            <span class="feature-desc">Conditional logic to display anonymous donors</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Aggregation Functions</span>
-            <code>COUNT(*), SUM(amount), AVG(amount), MAX(amount)</code>
-            <span class="feature-desc">Aggregate functions used in stored procedure for platform statistics</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">LIMIT & ORDER BY</span>
-            <code>ORDER BY donation_date DESC LIMIT 10</code>
-            <span class="feature-desc">Pagination and sorting for recent items display</span>
-        </div>
-    </div>
-</div>
 
 <!-- Statistics Cards -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

@@ -175,57 +175,6 @@ include __DIR__ . '/includes/header.php';
     </button>
 </div>
 
-<!-- SQL Features Panel -->
-<div class="sql-features-panel">
-    <h3>
-        📋 SQL Features Demonstrated on This Page
-        <button onclick="toggleFeaturePanel('campaigns-features')">
-            <i class="fas fa-chevron-down"></i>
-        </button>
-    </h3>
-    <div id="campaigns-features">
-        <div class="sql-feature-item">
-            <span class="feature-type">INSERT</span>
-            <code>INSERT INTO Campaigns (campaign_title, description, goal_amount, ...) VALUES (:title, :description, :goal_amount, ...)</code>
-            <span class="feature-desc">Creates new campaign with prepared statements for security</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">UPDATE</span>
-            <code>UPDATE Campaigns SET campaign_title = :title, status = :status WHERE campaign_id = :id</code>
-            <span class="feature-desc">Updates campaign fields with conditional WHERE clause</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">DELETE</span>
-            <code>DELETE FROM Campaigns WHERE campaign_id = :id</code>
-            <span class="feature-desc">Deletes campaign with CASCADE effects on related records (donations, comments, etc.)</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">GROUP BY + HAVING</span>
-            <code>SELECT status, COUNT(*) FROM Campaigns GROUP BY status HAVING COUNT(*) > 0</code>
-            <span class="feature-desc">Groups campaigns by status, filters groups with HAVING clause</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Complex JOIN</span>
-            <code>SELECT c.*, u.username, cat.category_name FROM Campaigns c INNER JOIN Users u ON c.creator_id = u.user_id LEFT JOIN Categories cat ON c.category_id = cat.category_id</code>
-            <span class="feature-desc">Combines INNER JOIN (required user) with LEFT JOIN (optional category)</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Aggregation Functions</span>
-            <code>SELECT COUNT(*) as count, SUM(goal_amount) as total, AVG(current_amount / goal_amount) as avg_progress</code>
-            <span class="feature-desc">Multiple aggregate functions (COUNT, SUM, AVG) with calculated columns</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Prepared Statements</span>
-            <code>$stmt->execute([':campaign_id' => $id])</code>
-            <span class="feature-desc">PDO prepared statements prevent SQL injection attacks</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">FULLTEXT Search</span>
-            <code>WHERE MATCH(campaign_title, description) AGAINST(:search_term) OR campaign_title LIKE :like_term</code>
-            <span class="feature-desc">Full-text index search combined with LIKE for flexible searching</span>
-        </div>
-    </div>
-</div>
 
 <!-- Statistics Cards -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -531,6 +480,11 @@ include __DIR__ . '/includes/header.php';
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm font-medium">
+                            <button onclick="viewCampaign(<?php echo $campaign['campaign_id']; ?>)"
+                                    class="text-green-600 hover:text-green-900 mr-3"
+                                    title="View campaign details and comments">
+                                <i class="fas fa-eye"></i>
+                            </button>
                             <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($campaign)); ?>)"
                                     class="text-blue-600 hover:text-blue-900 mr-3"
                                     data-sql-query="UPDATE Campaigns SET campaign_title = :title, status = :status WHERE campaign_id = :id"
@@ -753,6 +707,28 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
+<!-- View Campaign Modal -->
+<div id="viewModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white mb-10">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-eye text-green-600 mr-2"></i>
+                Campaign Details
+            </h3>
+            <button onclick="closeViewModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <div id="viewModalContent">
+            <!-- Content will be loaded dynamically -->
+            <div class="flex items-center justify-center py-12">
+                <i class="fas fa-spinner fa-spin text-4xl text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function openCreateModal() {
     document.getElementById('createModal').classList.remove('hidden');
@@ -787,11 +763,31 @@ function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
 
+function viewCampaign(campaignId) {
+    document.getElementById('viewModal').classList.remove('hidden');
+    
+    // Fetch campaign details with comments via AJAX
+    fetch(`get_campaign_details.php?campaign_id=${campaignId}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('viewModalContent').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('viewModalContent').innerHTML = 
+                '<div class="text-red-600 p-4">Error loading campaign details.</div>';
+        });
+}
+
+function closeViewModal() {
+    document.getElementById('viewModal').classList.add('hidden');
+}
+
 // Close modals on outside click
 window.onclick = function(event) {
     if (event.target.id === 'createModal') closeCreateModal();
     if (event.target.id === 'editModal') closeEditModal();
     if (event.target.id === 'deleteModal') closeDeleteModal();
+    if (event.target.id === 'viewModal') closeViewModal();
 }
 
 // Favorites tooltip functionality

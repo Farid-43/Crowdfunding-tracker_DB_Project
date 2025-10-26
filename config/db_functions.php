@@ -52,16 +52,17 @@ function getUserById($pdo, $user_id) {
  * Create new user
  * Demonstrates: INSERT with prepared statements, DEFAULT values
  */
-function createUser($pdo, $username, $email, $password, $full_name, $role = 'donor') {
-    $query = "INSERT INTO Users (username, email, password_hash, full_name, user_role) 
-              VALUES (:username, :email, :password_hash, :full_name, :role)";
+function createUser($pdo, $username, $email, $password, $full_name, $role = 'donor', $account_balance = 0) {
+    $query = "INSERT INTO Users (username, email, password_hash, full_name, user_role, account_balance) 
+              VALUES (:username, :email, :password_hash, :full_name, :role, :account_balance)";
     
     $params = [
         ':username' => $username,
         ':email' => $email,
         ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
         ':full_name' => $full_name,
-        ':role' => $role
+        ':role' => $role,
+        ':account_balance' => $account_balance
     ];
     
     executeAndLogQuery($pdo, $query, $params, 'users.php', 'INSERT');
@@ -253,7 +254,7 @@ function deleteCampaign($pdo, $campaign_id) {
  * Process donation using stored procedure
  * Demonstrates: CALL stored procedure, Transaction handling
  */
-function processDonation($pdo, $campaign_id, $donor_id, $amount, $payment_method, $message = '', $is_anonymous = false) {
+function processDonation($pdo, $campaign_id, $donor_id, $amount, $payment_method, $message = '', $is_anonymous = false, $reward_id = null) {
     $query = "CALL Process_Donation(:campaign_id, :donor_id, :amount, :payment_method, 
                                      :message, :is_anonymous, @donation_id, @success, @message_out)";
     
@@ -270,6 +271,23 @@ function processDonation($pdo, $campaign_id, $donor_id, $amount, $payment_method
     
     // Get output parameters
     $result = $pdo->query("SELECT @donation_id as donation_id, @success as success, @message_out as message")->fetch();
+    
+    // If donation successful and reward selected, assign reward
+    if ($result['success'] && $reward_id) {
+        try {
+            $reward_query = "INSERT INTO Donor_Rewards (donor_id, reward_id, donation_id, fulfillment_status, claimed_at)
+                            VALUES (:donor_id, :reward_id, :donation_id, 'pending', NOW())";
+            $reward_params = [
+                ':donor_id' => $donor_id,
+                ':reward_id' => $reward_id,
+                ':donation_id' => $result['donation_id']
+            ];
+            executeAndLogQuery($pdo, $reward_query, $reward_params, 'donations.php', 'INSERT');
+        } catch (Exception $e) {
+            // Log error but don't fail the donation
+            error_log("Error assigning reward: " . $e->getMessage());
+        }
+    }
     
     return $result;
 }

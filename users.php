@@ -187,53 +187,6 @@ include __DIR__ . '/includes/header.php';
     </button>
 </div>
 
-<!-- SQL Features Panel -->
-<div class="sql-features-panel">
-    <h3>
-        🔐 SQL Features Demonstrated on This Page
-        <button onclick="toggleFeaturePanel('users-features')">
-            <i class="fas fa-chevron-down"></i>
-        </button>
-    </h3>
-    <div id="users-features">
-        <div class="sql-feature-item">
-            <span class="feature-type">UNIQUE Constraints</span>
-            <code>CONSTRAINT uk_users_username UNIQUE (username), CONSTRAINT uk_users_email UNIQUE (email)</code>
-            <span class="feature-desc">Prevents duplicate usernames and emails - violations throw errors on INSERT/UPDATE</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">CHECK Constraints</span>
-            <code>CONSTRAINT chk_account_balance CHECK (account_balance >= 0), CONSTRAINT chk_user_role CHECK (user_role IN ('donor', 'campaigner', 'admin'))</code>
-            <span class="feature-desc">Validates data before insertion - balance must be non-negative, role must be valid</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Custom Functions</span>
-            <code>SELECT Get_Donor_Level(user_id) FROM Users</code>
-            <span class="feature-desc">User-defined function that calculates donor tier based on total donations</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Audit Triggers (AFTER UPDATE)</span>
-            <code>CREATE TRIGGER trg_user_after_update AFTER UPDATE ON Users FOR EACH ROW INSERT INTO User_Audit_History...</code>
-            <span class="feature-desc">Automatically logs every user modification with old/new values</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Conditional Updates by Role</span>
-            <code>UPDATE Users SET account_balance = ? WHERE user_id = ? AND user_role = 'donor'</code>
-            <span class="feature-desc">Role-based UPDATE restrictions ensure only appropriate users can be modified</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">CASCADE DELETE</span>
-            <code>ON DELETE CASCADE</code>
-            <span class="feature-desc">Deleting user automatically removes related donations and campaigns via FK constraints</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Correlated Subqueries</span>
-            <code>(SELECT COUNT(*) FROM Donations WHERE donor_id = u.user_id) as donations_made</code>
-            <span class="feature-desc">Subquery executes for each user row to fetch related donation count</span>
-        </div>
-    </div>
-</div>
-
 <!-- Role Statistics Cards -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <?php foreach ($role_stats as $stat): ?>

@@ -167,18 +167,5 @@
         </div>
     </nav>
 
-    <!-- SQL Learning Banner -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-center text-center">
-                <i class="fas fa-graduation-cap mr-3 text-2xl"></i>
-                <p class="text-sm md:text-base">
-                    <strong>Educational Platform:</strong> Hover over any button/link to see the SQL query it executes! 
-                    <span class="hidden md:inline">Click to view detailed explanations.</span>
-                </p>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

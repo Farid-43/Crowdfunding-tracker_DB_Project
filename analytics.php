@@ -188,58 +188,6 @@ include __DIR__ . '/includes/header.php';
     <p class="text-gray-600">Comprehensive SQL demonstrations: CTEs, VIEWs, ROLLUP, UNION, Stored Procedures</p>
 </div>
 
-<!-- SQL Features Panel -->
-<div class="sql-features-panel">
-    <h3>
-        📊 Advanced SQL Features Demonstrated on This Page
-        <button onclick="toggleFeaturePanel('analytics-features')">
-            <i class="fas fa-chevron-down"></i>
-        </button>
-    </h3>
-    <div id="analytics-features">
-        <div class="sql-feature-item">
-            <span class="feature-type">CTEs (WITH clause)</span>
-            <code>WITH Campaign_Stats AS (SELECT ...), Donor_Engagement AS (SELECT ...) SELECT * FROM Campaign_Stats JOIN Donor_Engagement</code>
-            <span class="feature-desc">Common Table Expressions for breaking complex queries into readable, modular subqueries</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">GROUP BY ... WITH ROLLUP</span>
-            <code>GROUP BY category, status WITH ROLLUP</code>
-            <span class="feature-desc">Generates subtotals and grand totals in a single query for hierarchical grouping</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">VIEWs</span>
-            <code>SELECT * FROM Campaign_Progress</code>
-            <span class="feature-desc">Pre-defined virtual tables that simplify complex queries and provide data abstraction</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">UNION ALL</span>
-            <code>SELECT 'Daily', ... FROM ... UNION ALL SELECT 'Weekly', ... FROM ... UNION ALL SELECT 'Monthly', ...</code>
-            <span class="feature-desc">Combines multiple SELECT results including duplicates (unlike UNION which removes them)</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Stored Procedures (CALL)</span>
-            <code>CALL Calculate_Platform_Statistics(@total_campaigns, @total_users, @total_donations, ...)</code>
-            <span class="feature-desc">Pre-compiled SQL routines stored in database for reusable business logic</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">HAVING with Multiple Conditions</span>
-            <code>GROUP BY category HAVING COUNT(*) >= 2 AND SUM(amount) > 10000 AND AVG(amount) > 5000</code>
-            <span class="feature-desc">Filters grouped results using aggregate conditions (WHERE filters rows, HAVING filters groups)</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">Conditional Aggregation</span>
-            <code>SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) as active_count</code>
-            <span class="feature-desc">Multiple CASE statements within aggregates to pivot data and create conditional counts/sums</span>
-        </div>
-        <div class="sql-feature-item">
-            <span class="feature-type">COALESCE for NULL Handling</span>
-            <code>COALESCE(category, 'ALL CATEGORIES')</code>
-            <span class="feature-desc">Replaces NULL values with default text, essential for ROLLUP results</span>
-        </div>
-    </div>
-</div>
-
 <!-- Stored Procedure Results: Platform Statistics -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg shadow-lg p-6 text-white"
